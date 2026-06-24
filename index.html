@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomeGuard v2.4.1</title>
+<style>
+  :root {
+    --bg: #0d0f12;
+    --bg2: #151820;
+    --bg3: #1c2028;
+    --bg4: #232830;
+    --border: #2a3040;
+    --text: #e8eaf0;
+    --text2: #8a93a6;
+    --text3: #5a6478;
+    --accent: #00d4b8;
+    --accent2: #00b89e;
+    --yellow: #f5a623;
+    --red: #e8453c;
+    --red2: #c23b33;
+    --green: #00c97a;
+    --card-radius: 12px;
+    --tab-h: 52px;
+  }
+  .light {
+    --bg: #f0f2f5;
+    --bg2: #ffffff;
+    --bg3: #e8ebf0;
+    --bg4: #dde1e8;
+    --border: #d0d5de;
+    --text: #1a1f2e;
+    --text2: #5a6478;
+    --text3: #8a93a6;
+    --accent: #009e88;
+    --accent2: #007a6a;
+    --yellow: #d48a10;
+    --red: #d03830;
+    --red2: #b02e28;
+    --green: #009a5c;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background .3s, color .3s;
+  }
+
+  /* HEADER */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 60px;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg,#1a4060,#0d2030);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--accent);
+  }
+  .logo-icon svg { width:18px; height:18px; fill:var(--accent); }
+  .logo-name { font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--accent); }
+  .logo-ver { font-size: 11px; color: var(--text3); margin-left: 4px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .wifi-badge { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: .06em; }
+  .wifi-badge svg { width:14px; height:14px; fill:var(--accent); }
+  .btn-header {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 6px; border: 1.5px solid;
+    font-size: 11px; font-weight: 700; letter-spacing: .06em;
+    cursor: pointer; background: transparent; transition: all .2s;
+  }
+  .btn-mode { border-color: var(--yellow); color: var(--yellow); }
+  .btn-mode:hover { background: rgba(245,166,35,.12); }
+  .btn-alarm { border-color: var(--accent); color: var(--accent); }
+  .btn-alarm.off { border-color: var(--text3); color: var(--text3); }
+  .btn-alarm:hover { background: rgba(0,212,184,.12); }
+
+  /* STATUS BANNER */
+  .status-banner {
+    margin: 20px 24px 0;
+    background: linear-gradient(135deg, #1a1400 0%, #2a2000 50%, #1a1400 100%);
+    border: 1px solid rgba(245,166,35,.3);
+    border-radius: 16px; padding: 24px 28px;
+    display: flex; align-items: center; gap: 20px;
+    position: relative; overflow: hidden;
+  }
+  .light .status-banner {
+    background: linear-gradient(135deg, #fff8e8 0%, #fff3cc 50%, #fff8e8 100%);
+    border-color: rgba(212,138,16,.3);
+  }
+  .status-banner::before {
+    content: ''; position: absolute; right: -60px; top: -60px;
+    width: 200px; height: 200px; border-radius: 50%;
+    border: 60px solid rgba(245,166,35,.04);
+  }
+  .shield-wrap { position: relative; flex-shrink: 0; }
+  .shield-pulse {
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 2px solid rgba(245,166,35,.4);
+    display: flex; align-items: center; justify-content: center;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(245,166,35,.3)} 50%{box-shadow:0 0 0 12px rgba(245,166,35,0)} }
+  .shield-pulse svg { width:30px; height:30px; fill:var(--yellow); }
+  .dot-yellow {
+    position: absolute; top: 2px; right: 2px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--yellow); border: 2px solid var(--bg);
+    animation: blink 1.5s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .status-info { flex: 1; }
+  .status-label { font-size: 10px; letter-spacing: .12em; color: var(--yellow); font-weight: 600; margin-bottom: 4px; }
+  .status-title { font-size: 36px; font-weight: 900; color: var(--yellow); letter-spacing: .02em; line-height: 1; }
+  .status-sub { font-size: 12px; color: var(--text2); margin-top: 8px; }
+  .status-stats { display: flex; gap: 6px; flex-shrink: 0; }
+  .stat-box {
+    background: rgba(255,255,255,.04); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 16px; text-align: center; min-width: 68px;
+  }
+  .light .stat-box { background: rgba(0,0,0,.04); }
+  .stat-num { font-size: 20px; font-weight: 700; color: var(--text); }
+  .stat-num.warn { color: var(--yellow); }
+  .stat-lbl { font-size: 9px; letter-spacing: .1em; color: var(--text3); margin-top: 2px; font-weight: 600; }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 4px; margin: 18px 24px 0;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 4px;
+  }
+  .tab {
+    flex: 1; text-align: center; padding: 9px 6px;
+    font-size: 12px; font-weight: 600; color: var(--text2);
+    border-radius: 7px; cursor: pointer; transition: all .2s;
+    letter-spacing: .02em; user-select: none; border: 1px solid transparent;
+  }
+  .tab:hover { color: var(--text); background: var(--bg3); }
+  .tab.active { color: var(--accent); background: var(--bg3); border-color: var(--accent); }
+
+  /* MAIN */
+  main { padding: 18px 24px 100px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* SECTION CARD */
+  .section-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--card-radius); padding: 18px 20px; margin-bottom: 16px;
+  }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .section-link { font-size: 12px; font-weight: 600; color: var(--accent); cursor: pointer; display: flex; align-items: center; gap: 3px; }
+  .section-link:hover { color: var(--accent2); }
+
+  /* ITEM GRID */
+  .items-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .item-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 10px; text-align: center; cursor: pointer;
+    transition: all .2s;
+  }
+  .item-card:hover { border-color: var(--accent); }
+  .item-card.absent { background: rgba(220,50,45,.08); border-color: rgba(220,50,45,.4); }
+  .item-card.absent:hover { border-color: var(--red); }
+  .item-icon { font-size: 22px; margin-bottom: 8px; }
+  .item-icon svg { width:22px; height:22px; display:block; margin:0 auto; }
+  .item-icon.absent svg { fill:var(--red) !important; }
+  .item-icon.present svg { fill:var(--accent); }
+  .item-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .item-status { font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+  .present-txt { color: var(--accent); }
+  .absent-txt { color: var(--red); }
+
+  /* PETS GRID */
+  .pets-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+  .pet-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 10px; text-align: center;
+    transition: border-color .2s; cursor: pointer;
+  }
+  .pet-card:hover { border-color: var(--accent); }
+  .pet-emoji { font-size: 32px; margin-bottom: 6px; }
+  .pet-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .pet-status { font-size: 10px; font-weight: 700; letter-spacing: .08em; color: var(--accent); }
+
+  /* ALERT LOG */
+  .alert-log { display: flex; flex-direction: column; gap: 8px; }
+  .alert-item {
+    background: var(--bg3); border-left: 3px solid;
+    border-radius: 0 8px 8px 0; padding: 10px 14px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .alert-item.danger { border-color: var(--red); background: rgba(232,69,60,.06); }
+  .alert-item.warning { border-color: var(--yellow); background: rgba(245,166,35,.06); }
+  .alert-item.info { border-color: var(--accent); background: rgba(0,212,184,.06); }
+  .alert-icon { font-size:16px; margin-top:2px; flex-shrink:0; }
+  .alert-txt { flex: 1; }
+  .alert-msg { font-size: 13px; font-weight: 600; color: var(--text); }
+  .alert-time { font-size: 11px; color: var(--text3); margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+
+  /* PANEL 1 LAYOUT */
+  .overview-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+
+  /* PANEL 2 - MES AFFAIRES */
+  .affaires-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .affaire-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--card-radius); padding: 18px 20px;
+    transition: border-color .2s;
+  }
+  .affaire-card:hover { border-color: var(--accent); }
+  .affaire-card.absent-card { border-color: rgba(220,50,45,.4); background: rgba(220,50,45,.04); }
+  .affaire-top { display: flex; align-items: center; gap: 14px; }
+  .affaire-icon-wrap {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .affaire-icon-wrap svg { width:22px; height:22px; fill:var(--accent); }
+  .affaire-icon-wrap.absent svg { fill: var(--red); }
+  .affaire-info { flex: 1; }
+  .affaire-name { font-size: 16px; font-weight: 700; color: var(--text); }
+  .affaire-time { font-size: 12px; color: var(--text3); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+  .badge-present {
+    padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    letter-spacing: .06em; background: rgba(0,201,122,.12); color: var(--green);
+    border: 1px solid rgba(0,201,122,.3); display: flex; align-items: center; gap: 5px;
+  }
+  .badge-absent {
+    padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    letter-spacing: .06em; background: rgba(220,50,45,.12); color: var(--red);
+    border: 1px solid rgba(220,50,45,.3); display: flex; align-items: center; gap: 5px;
+  }
+  .badge-dot { width:6px; height:6px; border-radius:50%; }
+  .badge-dot.green { background: var(--green); }
+  .badge-dot.red { background: var(--red); }
+  .absent-hint {
+    margin-top: 12px; padding: 10px 14px;
+    background: rgba(220,50,45,.08); border-radius: 8px;
+    font-size: 12px; color: var(--red); display: flex; align-items: center; gap: 8px;
+  }
+  .progress-section { margin-top: 20px; }
+  .progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text); }
+  .progress-bar-bg { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width .6s; }
+
+  /* PANEL 3 - MAISON */
+  .home-list { display: flex; flex-direction: column; gap: 10px; }
+  .home-item {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--card-radius); padding: 16px 20px;
+    display: flex; align-items: center; gap: 16px; transition: border-color .2s; cursor: pointer;
+  }
+  .home-item:hover { border-color: var(--accent); }
+  .home-item.danger-item { border-color: rgba(220,50,45,.4); background: rgba(220,50,45,.04); }
+  .home-item-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: var(--bg3); border: 1px solid var(--border);
+  }
+  .home-item-icon svg { width:22px; height:22px; }
+  .home-item-icon.danger-icon { background: rgba(220,50,45,.12); border-color: rgba(220,50,45,.3); }
+  .home-item-icon.danger-icon svg { fill: var(--red); }
+  .home-item-icon.ok-icon { background: rgba(0,212,184,.08); border-color: rgba(0,212,184,.2); }
+  .home-item-icon.ok-icon svg { fill: var(--accent); }
+  .home-item-info { flex: 1; }
+  .home-item-name { font-size: 15px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .home-item-sub { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  .tag {
+    display: inline-block; padding: 3px 8px; border-radius: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  }
+  .tag-danger { background: rgba(220,50,45,.15); color: var(--red); border: 1px solid rgba(220,50,45,.3); }
+  .tag-ok { background: rgba(0,212,184,.10); color: var(--accent); border: 1px solid rgba(0,212,184,.25); }
+  .tag-warn { background: rgba(245,166,35,.12); color: var(--yellow); border: 1px solid rgba(245,166,35,.3); }
+  .action-req {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--red);
+  }
+  .dot-ok { width:10px; height:10px; border-radius:50%; background: var(--green); flex-shrink:0; }
+  .dot-danger { width:10px; height:10px; border-radius:50%; background: var(--red); flex-shrink:0; }
+
+  /* PANEL 4 - SURVEILLANCE */
+  .cams-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cam-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--card-radius); overflow: hidden;
+    transition: border-color .2s; cursor: pointer;
+  }
+  .cam-card:hover { border-color: var(--accent); }
+  .cam-card.movement { border-color: rgba(245,166,35,.5); }
+  .cam-feed {
+    background: var(--bg3); height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .cam-feed svg.cam-ico { width:40px; height:40px; fill:var(--text3); opacity:.4; }
+  .live-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--red); color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    padding: 3px 7px; border-radius: 4px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .live-dot { width:6px; height:6px; border-radius:50%; background:#fff; animation: blink 1s infinite; }
+  .movement-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: var(--yellow); color: #1a0a00;
+    font-size: 10px; font-weight: 700; letter-spacing: .06em;
+    padding: 3px 8px; border-radius: 4px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .offline-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; letter-spacing: .12em; color: var(--text3);
+  }
+  .cam-info { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .cam-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .cam-status { font-size: 11px; font-weight: 600; color: var(--accent); margin-top: 2px; }
+  .eye-icon svg { width:18px; height:18px; fill:var(--accent); }
+  .cam-card.offline .cam-name { color: var(--text3); }
+  .cam-card.offline .cam-status { color: var(--text3); }
+  .cam-card.offline .eye-icon svg { fill:var(--text3); }
+
+  /* PANEL 5 - ANIMAUX */
+  .pets-list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pet-detail-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--card-radius); padding: 18px 20px;
+    transition: border-color .2s; cursor: pointer;
+  }
+  .pet-detail-card:hover { border-color: var(--accent); }
+  .pet-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .pet-emoji-big { font-size: 40px; line-height: 1; }
+  .pet-meta { flex: 1; }
+  .pet-dname { font-size: 16px; font-weight: 700; color: var(--text); }
+  .pet-type { font-size: 12px; color: var(--text3); }
+  .pet-last { font-size: 11px; color: var(--text3); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+  .pet-location {
+    background: var(--bg3); border-radius: 8px; padding: 8px 12px;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .pet-location svg { width:14px; height:14px; fill:var(--accent); }
+  .pet-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .pet-stat {
+    background: var(--bg3); border-radius: 8px; padding: 8px 12px;
+  }
+  .pet-stat-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; color: var(--text3); margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+  .pet-stat-label svg { width:12px; height:12px; fill:var(--accent); }
+  .pet-stat-value { font-size: 14px; font-weight: 700; color: var(--text); }
+  .pet-stat-value.active { color: var(--yellow); }
+  .pet-stat-value.calm { color: var(--accent); }
+  .btn-mark {
+    width: 100%; padding: 9px; border-radius: 8px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text2); font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-mark:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* EMERGENCY BAR */
+  .emergency-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+    background: #7a1010; padding: 10px 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .emergency-icon svg { width:20px; height:20px; fill:#ff8a8a; flex-shrink:0; }
+  .emergency-text { flex: 1; }
+  .emergency-title { font-size: 12px; font-weight: 700; color: #ff8a8a; letter-spacing: .04em; }
+  .emergency-sub { font-size: 10px; color: rgba(255,138,138,.6); margin-top: 1px; font-family: monospace; }
+  .btn-112 {
+    background: #c23b33; color: #fff; border: none;
+    font-size: 15px; font-weight: 900; padding: 8px 16px; border-radius: 8px;
+    cursor: pointer; letter-spacing: .04em; flex-shrink: 0;
+    transition: background .2s;
+  }
+  .btn-112:hover { background: #e8453c; }
+
+  /* QUESTION MARK */
+  .help-btn {
+    position: fixed; bottom: 60px; right: 20px; z-index: 200;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text2); font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+
+  @media (max-width: 800px) {
+    .overview-grid { grid-template-columns: 1fr; }
+    .items-grid { grid-template-columns: repeat(2,1fr); }
+    .status-stats { display: none; }
+    .affaires-grid, .pets-list, .cams-grid { grid-template-columns: 1fr; }
+    .status-title { font-size: 28px; }
+  }
+</style>
+</head>
+<body id="app">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2L3 7v7c0 5.25 3.75 10.15 9 11.25C17.25 24.15 21 19.25 21 14V7z"/></svg>
+    </div>
+    <span class="logo-name">HOMEGUARD</span>
+    <span class="logo-ver">v2.4.1</span>
+  </div>
+  <div class="header-right">
+    <div class="wifi-badge">
+      <svg viewBox="0 0 24 24"><path d="M1.5 8.5C5.3 4.9 10.4 3 15 3s9.7 1.9 13.5 5.5"/><path d="M5 12c1.9-1.9 4.4-3 7-3s5.1 1.1 7 3"/><circle cx="12" cy="18" r="1.5"/><path d="M8.5 15c.9-.9 2.2-1.5 3.5-1.5s2.6.6 3.5 1.5"/></svg>
+      CONNECTÉ
+    </div>
+    <button class="btn-header btn-mode" id="btnMode" onclick="toggleMode()">
+      <span id="modeIcon">☀️</span>
+      <span id="modeLabel">MODE CLAIR</span>
+    </button>
+    <button class="btn-header btn-alarm" id="btnAlarm" onclick="toggleAlarm()">
+      🔔 <span id="alarmLabel">ALARME ON</span>
+    </button>
+  </div>
+</header>
+
+<!-- STATUS BANNER -->
+<div class="status-banner">
+  <div class="shield-wrap">
+    <div class="shield-pulse">
+      <svg viewBox="0 0 24 24"><path d="M12 2L3 7v7c0 5.25 3.75 10.15 9 11.25C17.25 24.15 21 19.25 21 14V7z"/></svg>
+    </div>
+    <div class="dot-yellow"></div>
+  </div>
+  <div class="status-info">
+    <div class="status-label">● ÉTAT DU SYSTÈME</div>
+    <div class="status-title">ATTENTION</div>
+    <div class="status-sub">1 objet(s) manquant(s) · 1 danger(s)</div>
+  </div>
+  <div class="status-stats">
+    <div class="stat-box"><div class="stat-num warn">3/4</div><div class="stat-lbl">OBJETS</div></div>
+    <div class="stat-box"><div class="stat-num warn">4/6</div><div class="stat-lbl">SÉCURITÉ</div></div>
+    <div class="stat-box"><div class="stat-num">3/4</div><div class="stat-lbl">CAMÉRAS</div></div>
+    <div class="stat-box"><div class="stat-num">2/2</div><div class="stat-lbl">ANIMAUX</div></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">Vue d'ensemble</div>
+  <div class="tab" onclick="switchTab(1)">Mes affaires</div>
+  <div class="tab" onclick="switchTab(2)">Maison</div>
+  <div class="tab" onclick="switchTab(3)">Surveillance</div>
+  <div class="tab" onclick="switchTab(4)">🐾 Animaux</div>
+</div>
+
+<main>
+
+<!-- PANEL 0 : VUE D'ENSEMBLE -->
+<div class="panel active" id="panel0">
+  <div class="overview-grid">
+    <div>
+      <!-- Affaires personnelles -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Affaires personnelles</div>
+          <div class="section-link" onclick="switchTab(1)">Détails ›</div>
+        </div>
+        <div class="items-grid">
+          <div class="item-card">
+            <div class="item-icon present">
+              <svg viewBox="0 0 24 24"><path d="M20 8H4C2.9 8 2 8.9 2 10v9a2 2 0 002 2h16a2 2 0 002-2v-9c0-1.1-.9-2-2-2zm0 11H4v-9h16v9zM20 4H8l-2 4h16l-2-4z"/></svg>
+            </div>
+            <div class="item-name">Portefeuille</div>
+            <div class="item-status present-txt">PRÉSENT</div>
+          </div>
+          <div class="item-card absent">
+            <div class="item-icon absent">
+              <svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+            </div>
+            <div class="item-name">Clés</div>
+            <div class="item-status absent-txt">ABSENT</div>
+          </div>
+          <div class="item-card">
+            <div class="item-icon present">
+              <svg viewBox="0 0 24 24"><path d="M17 2H7C5.9 2 5 2.9 5 4v16c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H7V6h10v10zm-3 4H10v-2h4v2z"/></svg>
+            </div>
+            <div class="item-name">Téléphone</div>
+            <div class="item-status present-txt">PRÉSENT</div>
+          </div>
+          <div class="item-card">
+            <div class="item-icon present">
+              <svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.07-.44.18-.86.18-1.3C18 2.12 15.89 0 13.3 0c-1.3 0-2.4.5-3.3 1.3L9 3 7.7 1.3C6.8.5 5.7 0 4.4 0 1.8 0 0 2.12 0 4.7c0 .44.1.86.18 1.3H0v2h20v12H4V8H2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+            </div>
+            <div class="item-name">Sac</div>
+            <div class="item-status present-txt">PRÉSENT</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animaux de compagnie -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">🐾 Animaux de compagnie</div>
+          <div class="section-link" onclick="switchTab(4)">Détails ›</div>
+        </div>
+        <div class="pets-grid" style="grid-template-columns: repeat(2,1fr);">
+          <div class="pet-card">
+            <div class="pet-emoji">🐕</div>
+            <div class="pet-name">Milo</div>
+            <div class="pet-status">DEDANS</div>
+          </div>
+          <div class="pet-card">
+            <div class="pet-emoji">🐈</div>
+            <div class="pet-name">Luna</div>
+            <div class="pet-status">DEDANS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Journal d'alertes -->
+    <div>
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Journal d'alertes</div>
+        </div>
+        <div class="alert-log">
+          <div class="alert-item danger">
+            <div class="alert-icon">🔑</div>
+            <div class="alert-txt">
+              <div class="alert-msg">Clés non détectées — hors périmètre</div>
+              <div class="alert-time">🕐 14:32</div>
+            </div>
+          </div>
+          <div class="alert-item warning">
+            <div class="alert-icon">🔥</div>
+            <div class="alert-txt">
+              <div class="alert-msg">Gaz ouvert — vérification requise</div>
+              <div class="alert-time">🕐 14:28</div>
+            </div>
+          </div>
+          <div class="alert-item warning">
+            <div class="alert-icon">🐾</div>
+            <div class="alert-txt">
+              <div class="alert-msg">Milo dehors depuis plus de 10 min</div>
+              <div class="alert-time">🕐 13:55</div>
+            </div>
+          </div>
+          <div class="alert-item info">
+            <div class="alert-icon">🛡️</div>
+            <div class="alert-txt">
+              <div class="alert-msg">Système armé — départ</div>
+              <div class="alert-time">🕐 13:45</div>
+            </div>
+          </div>
+          <div class="alert-item info">
+            <div class="alert-icon">📹</div>
+            <div class="alert-txt">
+              <div class="alert-msg">Mouvement détecté — jardin arrière</div>
+              <div class="alert-time">🕐 13:40</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 1 : MES AFFAIRES -->
+<div class="panel" id="panel1">
+  <div class="affaires-grid">
+    <div class="affaire-card">
+      <div class="affaire-top">
+        <div class="affaire-icon-wrap">
+          <svg viewBox="0 0 24 24"><path d="M20 8H4C2.9 8 2 8.9 2 10v9a2 2 0 002 2h16a2 2 0 002-2v-9c0-1.1-.9-2-2-2zm0 11H4v-9h16v9zM20 4H8l-2 4h16l-2-4z"/></svg>
+        </div>
+        <div class="affaire-info">
+          <div class="affaire-name">Portefeuille</div>
+          <div class="affaire-time">🕐 Il y a 2 min</div>
+        </div>
+        <div class="badge-present"><div class="badge-dot green"></div>PRÉSENT</div>
+      </div>
+    </div>
+
+    <div class="affaire-card absent-card">
+      <div class="affaire-top">
+        <div class="affaire-icon-wrap absent">
+          <svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+        </div>
+        <div class="affaire-info">
+          <div class="affaire-name">Clés</div>
+          <div class="affaire-time">🕐 Il y a 23 min</div>
+        </div>
+        <div class="badge-absent"><div class="badge-dot red"></div>ABSENT</div>
+      </div>
+      <div class="absent-hint">
+        📍 Dernière position détectée à ~15m
+      </div>
+    </div>
+
+    <div class="affaire-card">
+      <div class="affaire-top">
+        <div class="affaire-icon-wrap">
+          <svg viewBox="0 0 24 24"><path d="M17 2H7C5.9 2 5 2.9 5 4v16c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H7V6h10v10zm-3 4H10v-2h4v2z"/></svg>
+        </div>
+        <div class="affaire-info">
+          <div class="affaire-name">Téléphone</div>
+          <div class="affaire-time">🕐 Maintenant</div>
+        </div>
+        <div class="badge-present"><div class="badge-dot green"></div>PRÉSENT</div>
+      </div>
+    </div>
+
+    <div class="affaire-card">
+      <div class="affaire-top">
+        <div class="affaire-icon-wrap">
+          <svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.07-.44.18-.86.18-1.3C18 2.12 15.89 0 13.3 0c-1.3 0-2.4.5-3.3 1.3L9 3 7.7 1.3C6.8.5 5.7 0 4.4 0 1.8 0 0 2.12 0 4.7c0 .44.1.86.18 1.3H0v2h20v12H4V8H2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+        </div>
+        <div class="affaire-info">
+          <div class="affaire-name">Sac</div>
+          <div class="affaire-time">🕐 Il y a 5 min</div>
+        </div>
+        <div class="badge-present"><div class="badge-dot green"></div>PRÉSENT</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-section" style="margin-top:20px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:18px 20px;">
+    <div class="progress-header">
+      <span>Objets présents</span>
+      <span>3/4</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" style="width:75%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 2 : MAISON -->
+<div class="panel" id="panel2">
+  <div class="home-list">
+    <div class="home-item danger-item">
+      <div class="home-item-icon danger-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="currentColor"/><path d="M15.5 8c-2-2-3-2.5-3.5-7C12 4.5 11 6.5 9 8c-1.5 1.5-2.5 3.2-2.5 5.2C6.5 16.4 9 19 12 19s5.5-2.6 5.5-5.8c0-2-.9-3.7-2-5.2z" fill="currentColor"/></svg>
+      </div>
+      <div class="home-item-info">
+        <div class="home-item-name">Gaz <span class="tag tag-danger">OUVERT</span></div>
+        <div class="home-item-sub">14 ppm</div>
+      </div>
+      <div class="action-req">⚠️ ACTION REQUISE</div>
+    </div>
+
+    <div class="home-item">
+      <div class="home-item-icon ok-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm.5-10H11v6l5.25 3.15.75-1.23-4.5-2.67V8z" fill="currentColor"/></svg>
+      </div>
+      <div class="home-item-info">
+        <div class="home-item-name">Four <span class="tag tag-ok">ÉTEINT</span></div>
+        <div class="home-item-sub">Hors tension</div>
+      </div>
+      <div class="dot-ok"></div>
+    </div>
+
+    <div class="home-item">
+      <div class="home-item-icon ok-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2C20 10.48 17.33 6.55 12 2zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14C18 17.43 15.35 20 12 20z" fill="currentColor"/></svg>
+      </div>
+      <div class="home-item-info">
+        <div class="home-item-name">Fumée <span class="tag tag-ok">NORMAL</span></div>
+        <div class="home-item-sub">0.02 mg/m³</div>
+      </div>
+      <div class="dot-ok"></div>
+    </div>
+
+    <div class="home-item">
+      <div class="home-item-icon ok-icon">
+        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/></svg>
+      </div>
+      <div class="home-item-info">
+        <div class="home-item-name">Porte Entrée <span class="tag tag-ok">VERROUILLÉE</span></div>
+        <div class="home-item-sub">Fermée à clé</div>
+      </div>
+      <div class="dot-ok"></div>
+    </div>
+
+    <div class="home-item">
+      <div class="home-item-icon ok-icon">
+        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/></svg>
+      </div>
+      <div class="home-item-info">
+        <div class="home-item-name">Porte Garage <span class="tag tag-ok">FERMÉE</span></div>
+        <div class="home-item-sub">Vérifiée à 13:40</div>
+      </div>
+      <div class="dot-ok"></div>
+    </div>
+
+    <div class="home-item">
+      <div class="home-item-icon ok-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="currentColor"/></svg>
+      </div>
+      <div class="home-item-info">
+        <div class="home-item-name">Fenêtres <span class="tag tag-ok">FERMÉES</span></div>
+        <div class="home-item-sub">6/6 fermées</div>
+      </div>
+      <div class="dot-ok"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 3 : SURVEILLANCE -->
+<div class="panel" id="panel3">
+  <div class="cams-grid">
+    <div class="cam-card">
+      <div class="cam-feed">
+        <svg class="cam-ico" viewBox="0 0 24 24"><path d="M18 10.48V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4.48l4 3.98v-11l-4 3.98zm-2-.79V18H4V6h12v3.69z"/></svg>
+        <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      </div>
+      <div class="cam-info">
+        <div>
+          <div class="cam-name">Entrée principale</div>
+          <div class="cam-status">ACTIF</div>
+        </div>
+        <div class="eye-icon"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>
+      </div>
+    </div>
+
+    <div class="cam-card movement">
+      <div class="cam-feed">
+        <svg class="cam-ico" viewBox="0 0 24 24"><path d="M18 10.48V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4.48l4 3.98v-11l-4 3.98zm-2-.79V18H4V6h12v3.69z"/></svg>
+        <div class="movement-badge">⚡ MOUVEMENT</div>
+        <div class="live-badge" style="background:#1a1400; border:1px solid var(--yellow); color:var(--yellow);">LIVE</div>
+      </div>
+      <div class="cam-info">
+        <div>
+          <div class="cam-name">Jardin arrière</div>
+          <div class="cam-status">ACTIF</div>
+        </div>
+        <div class="eye-icon"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>
+      </div>
+    </div>
+
+    <div class="cam-card">
+      <div class="cam-feed">
+        <svg class="cam-ico" viewBox="0 0 24 24"><path d="M18 10.48V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4.48l4 3.98v-11l-4 3.98zm-2-.79V18H4V6h12v3.69z"/></svg>
+        <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      </div>
+      <div class="cam-info">
+        <div>
+          <div class="cam-name">Couloir</div>
+          <div class="cam-status">ACTIF</div>
+        </div>
+        <div class="eye-icon"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>
+      </div>
+    </div>
+
+    <div class="cam-card offline">
+      <div class="cam-feed">
+        <div class="offline-overlay">HORS LIGNE</div>
+      </div>
+      <div class="cam-info">
+        <div>
+          <div class="cam-name" style="color:var(--text3)">Garage</div>
+          <div class="cam-status" style="color:var(--text3)">DÉCONNECTÉE</div>
+        </div>
+        <div class="eye-icon"><svg viewBox="0 0 24 24" style="fill:var(--text3)"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 4 : ANIMAUX (sans Némo) -->
+<div class="panel" id="panel4">
+  <div class="pets-list">
+    <div class="pet-detail-card">
+      <div class="pet-top">
+        <div class="pet-emoji-big">🐕</div>
+        <div class="pet-meta">
+          <div class="pet-dname">Milo</div>
+          <div class="pet-type">Chien</div>
+          <div class="pet-last">🕐 Il y a 12 min</div>
+        </div>
+        <div class="badge-present"><div class="badge-dot green"></div>DEDANS</div>
+      </div>
+      <div class="pet-location">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Jardin
+      </div>
+      <div class="pet-stats">
+        <div class="pet-stat">
+          <div class="pet-stat-label">🌡️ TEMP. CORP.</div>
+          <div class="pet-stat-value">38.6°C</div>
+        </div>
+        <div class="pet-stat">
+          <div class="pet-stat-label">⚡ ACTIVITÉ</div>
+          <div class="pet-stat-value active">ACTIF</div>
+        </div>
+      </div>
+      <button class="btn-mark">MARQUER DEHORS</button>
+    </div>
+
+    <div class="pet-detail-card">
+      <div class="pet-top">
+        <div class="pet-emoji-big">🐈</div>
+        <div class="pet-meta">
+          <div class="pet-dname">Luna</div>
+          <div class="pet-type">Chat</div>
+          <div class="pet-last">🕐 Il y a 3 min</div>
+        </div>
+        <div class="badge-present"><div class="badge-dot green"></div>DEDANS</div>
+      </div>
+      <div class="pet-location">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Salon
+      </div>
+      <div class="pet-stats">
+        <div class="pet-stat">
+          <div class="pet-stat-label">🌡️ TEMP. CORP.</div>
+          <div class="pet-stat-value">38.2°C</div>
+        </div>
+        <div class="pet-stat">
+          <div class="pet-stat-label">⚡ ACTIVITÉ</div>
+          <div class="pet-stat-value calm">CALME</div>
+        </div>
+      </div>
+      <button class="btn-mark">MARQUER DEHORS</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- EMERGENCY BAR -->
+<div class="emergency-bar">
+  <div class="emergency-icon">
+    <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+  </div>
+  <div class="emergency-text">
+    <div class="emergency-title">URGENCE — Appuyer sur le bouton HomeGuard ou composer le 112</div>
+    <div class="emergency-sub">Localisation GPS transmise automatiquement</div>
+  </div>
+  <button class="btn-112" onclick="alert('Appel d\'urgence — 112')">112</button>
+</div>
+
+<div class="help-btn" title="Aide">?</div>
+
+<script>
+let lightMode = false;
+let alarmOn = true;
+
+function toggleMode() {
+  lightMode = !lightMode;
+  document.getElementById('app').classList.toggle('light', lightMode);
+  document.getElementById('modeIcon').textContent = lightMode ? '🌙' : '☀️';
+  document.getElementById('modeLabel').textContent = lightMode ? 'MODE SOMBRE' : 'MODE CLAIR';
+}
+
+function toggleAlarm() {
+  alarmOn = !alarmOn;
+  const btn = document.getElementById('btnAlarm');
+  document.getElementById('alarmLabel').textContent = alarmOn ? 'ALARME ON' : 'ALARME OFF';
+  btn.classList.toggle('off', !alarmOn);
+}
+
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+}
+</script>
+</body>
+</html>
